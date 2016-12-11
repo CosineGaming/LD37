@@ -1,14 +1,36 @@
 function Level()
 {
 
-	this.player = undefined;
-	this.walls = undefined;
-	this.portalUp = undefined;
-	this.portalDown = undefined;
 	this.portalUpHold = 0;
 	this.portalDownHold = 0;
+	this.bulletCountdown = 0;
 	this.isNew = true;
+	this.crackTypes = 4;
+	this.monsterTypes = 1;
+	this.lastEntropy = 0;
 
+}
+
+Level.prototype.makeCracksAndMonsters = function(cracks, monsters)
+{
+	if (typeof monsters == "undefined")
+	{
+		monsters = cracks;
+	}
+	for (var i=0; i<cracks; i++)
+	{
+		var type = "cracks" + Math.floor(Math.random() * this.crackTypes);
+		var crack = this.cracks.create(0, 0, type);
+		crack.x = Math.random() * (320 - 64 - 3 - 3) + 3;
+		crack.y = Math.random() * (180 - 64 - 52) + 52;
+	}
+	for (var i=0; i<monsters; i++)
+	{
+		var type = "monster" + Math.floor(Math.random() * this.monsterTypes);
+		var monster = this.monsters.create(0, 0, type);
+		monster.x = Math.random() * (320 - 64 - 3 - 3) + 3;
+		monster.y = Math.random() * (180 - 64 - 52) + 52;
+	}
 }
 
 Level.prototype.create = function()
@@ -16,54 +38,65 @@ Level.prototype.create = function()
 
 	game.stage = levels[level];
 
+	var cracks = 0.5;
+
 	if (this.isNew)
 	{
-
-		game.renderer.renderSession.roundPixels = true;
-		// TODO: Make work
-		// Phaser.Canvas.setImageRenderingCrisp(game.canvas);
-		// Phaser.Canvas.setSmoothingEnabled(game.context, false);
-		game.physics.startSystem(Phaser.Physics.ARCADE);
 
 		game.stage.addChild(game.make.sprite(0, 0, "floor"));
 
 		this.walls = game.stage.addChild(game.make.group());
 		this.walls.enableBody = true;
-		var top = this.walls.create(0, 0);
-		top.body.width = 320;
-		top.body.height = 26;
-		top.body.immovable = true;
-		var top = this.walls.create(0, 0);
-		top.body.width = 3;
-		top.body.height = 180;
-		top.body.immovable = true;
-		var top = this.walls.create(317, 0);
-		top.body.width = 3;
-		top.body.height = 180;
-		top.body.immovable = true;
+		var wall = this.walls.create(0, 0);
+		wall.body.width = 320;
+		wall.body.height = 26;
+		wall.body.immovable = true;
+		wall = this.walls.create(0, 0);
+		wall.body.width = 3;
+		wall.body.height = 200;
+		wall.body.immovable = true;
+		wall = this.walls.create(317, 0);
+		wall.body.width = 3;
+		wall.body.height = 200;
+		wall.body.immovable = true;
+		wall = this.walls.create(0, 180 - 3);
+		wall.body.width = 320;
+		wall.body.height = 3;
+		wall.body.immovable = true;
+
+		this.cracks = game.stage.addChild(game.make.group());
+		this.monsters = game.stage.addChild(game.make.group());
+
+		this.makeCracksAndMonsters(Math.random() * level * cracks - 1);
 
 		var portalLocations = [[80, 60],  [160, 60],  [240, 60],
 		                       [80, 120], [160, 120], [240, 120]];
 		// Pick a portal and remove it from the list
 		var up = portalLocations.splice(Math.floor(Math.random() * 6), 1)[0];
-		this.portalUp = game.stage.addChild(game.make.sprite(up[0], up[1], "portal"));
-		game.physics.arcade.enable(this.portalUp);
+		var portalUp = game.stage.addChild(game.make.sprite(up[0], up[1] - 24, "portalUp"));
+		game.physics.arcade.enable(portalUp);
 		// Prevent from going to levels[0]
 		if (level != 1)
 		{
 			// Pick a portal from the reduced list
 			var down = portalLocations[Math.floor(Math.random() * 5)];
-			this.portalDown = game.stage.addChild(game.make.sprite(down[0], down[1], "portal"));
-			game.physics.arcade.enable(this.portalDown);
+			var portalDown = game.stage.addChild(game.make.sprite(down[0], down[1] - 24, "portalDown"));
+			game.physics.arcade.enable(portalDown);
 		}
 
-		this.player = game.stage.addChild(game.make.sprite(0, 0, "player"));
-		game.physics.arcade.enable(this.player);
-		this.player.body.offset = new Phaser.Point(0, 17)
-		this.player.body.width = 20;
-		this.player.body.height = 0;
+		this.player = game.stage.addChild(new Player(portalUp, portalDown));
+
+		game.stage.addChild(game.make.sprite(0, 180 - 26, "frontWall"));
+
+		this.font = game.make.retroFont("arabic", 12, 16, Phaser.RetroFont.TEXT_SET1);
+		game.stage.addChild(game.make.image(5, 180 - 22, this.font));
 
 	}
+
+	this.makeCracksAndMonsters(Math.random() * cracks * (entropy - this.lastEntropy) - 1);
+	this.lastEntropy = entropy;
+
+	this.font.text = "Entropy: " + entropy;
 
 	this.isNew = false;
 
@@ -71,93 +104,5 @@ Level.prototype.create = function()
 
 Level.prototype.update = function()
 {
-	console.log("Hello")
-	var speed = 25;
-	var friction = .85;
-	if (cursors.left.isDown || actions.left.isDown)
-	{
-		this.player.body.velocity.x -= speed;
-	}
-	if (cursors.right.isDown || actions.right.isDown)
-	{
-		this.player.body.velocity.x += speed;
-	}
-	if (cursors.up.isDown || actions.up.isDown)
-	{
-		this.player.body.velocity.y -= speed * perspective;
-	}
-	if (cursors.down.isDown || actions.down.isDown)
-	{
-		this.player.body.velocity.y += speed * perspective;
-	}
-	if (cursors.down.isDown && actions.down.isDown && this.portalDownHold == 0)
-	{
-		this.portalDownHold = 60;
-		setLevel(level - 1);
-	}
-	this.player.body.velocity.x *= friction;
-	this.player.body.velocity.y *= friction;
-
-	var distance = 27;
-	var holdFrames = 100;
-	var withinDecreaseSpeed = 1;
-	var decreaseSpeed = 2;
-	var goingDown = false;
-	var chargeKeep = 0.5;
-	if (actions.chargePortal.isDown)
-	{
-		if (Phaser.Point.distance(this.player.body.center, this.portalUp.body.center) < distance)
-		{
-			this.portalUpHold++;
-			if (this.portalUpHold > holdFrames)
-			{
-				this.portalUpHold *= chargeKeep;
-				setLevel(level + 1);
-			}
-		}
-		else if (this.portalDown && Phaser.Point.distance(this.player.body.center, this.portalDown.body.center) < distance)
-		{
-			this.portalDownHold++;
-			if (this.portalDownHold > holdFrames)
-			{
-				this.portalDownHold *= chargeKeep;
-				setLevel(level - 1);
-			}
-		}
-		else
-		{
-			goingDown = withinDecreaseSpeed;
-		}
-	}
-	else
-	{
-		goingDown = decreaseSpeed;
-	}
-	if (goingDown)
-	{
-		if (this.portalUpHold > 0)
-		{
-			this.portalUpHold -= goingDown;
-		}
-		if (this.portalUpHold < 0)
-		{
-			this.portalUpHold = 0;
-		}
-		if (this.portalDownHold > 0)
-		{
-			this.portalDownHold -= goingDown;
-		}
-		if (this.portalDownHold < 0)
-		{
-			this.portalDownHold = 0;
-		}
-	}
-	this.portalUp.tint = Phaser.Color.getColor(255, 255 * (1 - this.portalUpHold / holdFrames), 255 * (1 - this.portalUpHold / holdFrames));
-	if (this.portalDown)
-	{
-		this.portalDown.tint = Phaser.Color.getColor(255, 255 * (1 - this.portalDownHold / holdFrames), 255 * (1 - this.portalDownHold / holdFrames));
-	}
-
-	game.physics.arcade.collide(this.player, this.walls);
 
 }
