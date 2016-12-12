@@ -1,35 +1,22 @@
 function Level()
 {
 
-	this.portalUpHold = 0;
-	this.portalDownHold = 0;
-	this.bulletCountdown = 0;
 	this.isNew = true;
-	this.crackTypes = 4;
+	this.crackTypes = 2;
 	this.monsterTypes = 1;
 	this.lastEntropy = 0;
+	this.bullets;
 
 }
 
-Level.prototype.makeCracksAndMonsters = function(cracks, monsters)
+Level.prototype.makeCracks = function(cracks)
 {
-	if (typeof monsters == "undefined")
-	{
-		monsters = cracks;
-	}
 	for (var i=0; i<cracks; i++)
 	{
 		var type = "cracks" + Math.floor(Math.random() * this.crackTypes);
 		var crack = this.cracks.create(0, 0, type);
 		crack.x = Math.random() * (320 - 64 - 3 - 3) + 3;
 		crack.y = Math.random() * (180 - 64 - 52) + 52;
-	}
-	for (var i=0; i<monsters; i++)
-	{
-		var type = "monster" + Math.floor(Math.random() * this.monsterTypes);
-		var monster = this.monsters.create(0, 0, type);
-		monster.x = Math.random() * (320 - 64 - 3 - 3) + 3;
-		monster.y = Math.random() * (180 - 64 - 52) + 52;
 	}
 }
 
@@ -65,44 +52,119 @@ Level.prototype.create = function()
 		wall.body.immovable = true;
 
 		this.cracks = game.stage.addChild(game.make.group());
-		this.monsters = game.stage.addChild(game.make.group());
 
-		this.makeCracksAndMonsters(Math.random() * level * cracks - 1);
+		this.sorted = game.stage.addChild(game.make.group());
+
+		this.monsters = game.stage.addChild(game.make.group());
+		this.monsters.enableBody = true;
+		this.monsters.classType = Monster;
+
+		this.makeCracks(Math.random() * level * cracks - 1);
+
+		for (var i=0; i<Math.random() * level * cracks; i++)
+		{
+			var type = "monster" + Math.floor(Math.random() * this.monsterTypes);
+			var monster = this.monsters.create(0, 0, type);
+		}
 
 		var portalLocations = [[80, 60],  [160, 60],  [240, 60],
 		                       [80, 120], [160, 120], [240, 120]];
 		// Pick a portal and remove it from the list
 		var up = portalLocations.splice(Math.floor(Math.random() * 6), 1)[0];
-		var portalUp = game.stage.addChild(game.make.sprite(up[0], up[1] - 24, "portalUp"));
-		game.physics.arcade.enable(portalUp);
+		this.portalUp = game.stage.addChild(game.make.sprite(up[0], up[1] - 24, "portalUp"));
+		game.physics.arcade.enable(this.portalUp);
+		this.portalUp.body.offset = new Phaser.Point(0, 17);
+		this.portalUp.body.width = 25;
+		this.portalUp.body.height = 15;
+		this.portalUp.body.immovable = true;
 		// Prevent from going to levels[0]
 		if (level != 1)
 		{
 			// Pick a portal from the reduced list
 			var down = portalLocations[Math.floor(Math.random() * 5)];
-			var portalDown = game.stage.addChild(game.make.sprite(down[0], down[1] - 24, "portalDown"));
-			game.physics.arcade.enable(portalDown);
+			this.portalDown = game.stage.addChild(game.make.sprite(down[0], down[1] - 24, "portalDown"));
+			game.physics.arcade.enable(this.portalDown);
+			this.portalDown.body.offset = new Phaser.Point(0, 17);
+			this.portalDown.body.width = 25;
+			this.portalDown.body.height = 15;
+			this.portalDown.body.immovable = true;
 		}
 
-		this.player = game.stage.addChild(new Player(portalUp, portalDown));
+		this.player = game.stage.addChild(new Player(this.portalUp, this.portalDown));
+
+		this.bullets = game.stage.addChild(game.make.group());
+		this.enemyBullets = game.stage.addChild(game.make.group());
 
 		game.stage.addChild(game.make.sprite(0, 180 - 26, "frontWall"));
 
 		this.font = game.make.retroFont("arabic", 12, 16, Phaser.RetroFont.TEXT_SET1);
 		game.stage.addChild(game.make.image(5, 180 - 22, this.font));
 
+		// Add objects that exist in isometric space to a group that gets sorted
+		this.sorted.add(this.monsters);
+		this.sorted.add(this.player);
+		this.sorted.add(this.portalUp);
+		if (this.portalDown)
+		{
+			this.sorted.add(this.portalDown);
+		}
+
 	}
 
-	this.makeCracksAndMonsters(Math.random() * cracks * (entropy - this.lastEntropy) - 1);
+	this.makeCracks(Math.random() * cracks * (entropy - this.lastEntropy) - 1);
 	this.lastEntropy = entropy;
 
-	this.font.text = "Entropy: " + entropy;
+	this.font.text = "Entropy:" + (entropy + level);
 
 	this.isNew = false;
 
 }
 
+Level.prototype.levelShift = function(to)
+{
+
+	var fromIndex;
+	var at;
+	if (levels.length > to + 1)
+	{
+		fromIndex = to + 1;
+		at = this.portalUp;
+	}
+	else if (level != 1)
+	{
+		fromIndex = to - 1;
+		at = this.portalDown;
+	}
+	if (typeof from != "undefined")
+	{
+		var from = game.state.states[fromIndex].monsters;
+		var monster = from.getRandom();
+		if (monster)
+		{
+			entropy += 1;
+			this.makeCracks(1);
+			this.font.text = "Entropy:" + (entropy + to) + " Phase detected";
+			this.monsters.add(monster)
+			from.removeChild(monster);
+			monster.x = at.body.center.x - monster.width / 2;
+			monster.y = at.body.bottom - monster.height + 5;
+		}
+		else
+		{
+			alert("Going deeper")
+			this.levelShift(fromIndex);
+		}
+	}
+
+}
+
 Level.prototype.update = function()
 {
+
+	var monsterTeleports = 50;
+	if (Math.random() * ((entropy + level) / 60 / monsterTeleports + 1) > 1)
+	{
+		this.levelShift(level);
+	}
 
 }
