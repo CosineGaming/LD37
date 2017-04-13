@@ -6,6 +6,7 @@ function Level()
 	this.monsterTypes = 1;
 	this.lastEntropy = 0;
 	this.bullets;
+	this.level = level;
 
 }
 
@@ -22,7 +23,6 @@ Level.prototype.makeCracks = function(cracks)
 
 Level.prototype.create = function()
 {
-
 	game.stage = levels[level];
 
 	var cracks = 0.5;
@@ -109,6 +109,9 @@ Level.prototype.create = function()
 			this.sorted.add(this.portalDown);
 		}
 
+        game.stage.addChild(game.make.sprite(25,  110, "dpad"));
+        game.stage.addChild(game.make.sprite(250, 110, "dpad"));
+
 	}
 
 	this.makeCracks(Math.random() * cracks * (entropy - this.lastEntropy) - 1);
@@ -120,22 +123,22 @@ Level.prototype.create = function()
 
 }
 
-Level.prototype.levelShift = function(to)
+Level.prototype.levelShift = function(to, direction=0)
 {
 
 	var fromIndex;
 	var at;
-	if (levels.length > to + 1)
+	if (direction != -1 && levels.length > to + 1 && Math.random() < 0.5)
 	{
 		fromIndex = to + 1;
 		at = this.portalUp;
 	}
-	else if (level != 1)
+	else if (direction != 1 && to != 1)
 	{
 		fromIndex = to - 1;
 		at = this.portalDown;
 	}
-	if (typeof from != "undefined")
+	if (typeof fromIndex != "undefined")
 	{
 		var from = game.state.states[fromIndex].monsters;
 		var monster = from.getRandom();
@@ -143,16 +146,14 @@ Level.prototype.levelShift = function(to)
 		{
 			entropy += 1;
 			this.makeCracks(1);
-			this.font.text = "Entropy:" + (entropy + to) + " Phase detected";
-			this.monsters.add(monster)
-			from.removeChild(monster);
+			this.font.text = "Entropy:" + (entropy + level) + " Phase detected";
+			monster.moveToCurrentLevel();
 			monster.x = at.body.center.x - monster.width / 2;
 			monster.y = at.body.bottom - monster.height + 5;
 		}
 		else
 		{
-			alert("Going deeper")
-			this.levelShift(fromIndex);
+			this.levelShift(fromIndex, fromIndex - to);
 		}
 	}
 
@@ -161,7 +162,7 @@ Level.prototype.levelShift = function(to)
 Level.prototype.update = function()
 {
 
-	var monsterTeleports = 50;
+	var monsterTeleports = 100;
 	if (Math.random() * ((entropy + level) / 60 / monsterTeleports + 1) > 1)
 	{
 		this.levelShift(level);

@@ -3,12 +3,13 @@ function Player(portalUp, portalDown)
 
 	this.portalUpHold = 0;
 	this.portalDownHold = 0;
-	this.bulletCountdown = 0;
+	this.bulletCharge = 0;
+	this.bulletCool = 0;
 	this.portalUp = portalUp;
 	this.portalDown = portalDown;
 	this.lastDown = false;
 
-	this.bulletStrength = 50;
+	this.bulletStrength = 20;
 
 	Phaser.Sprite.call(this, game, 0, 0, "player");
 
@@ -55,87 +56,32 @@ Player.prototype.constructor = Player;
 Player.prototype.update = function()
 {
 
-	var speed = 18;
-	var friction = .85;
-	if (cursors.left.isDown || actions.left.isDown)
+	var touchDirX = 0;
+	var touchDirY = 0;
+	var  leftPointer = 0;
+	var rightPointer = 0;
+	
+	if (game.input.pointer1.x > 160)
 	{
-		this.body.velocity.x -= speed;
+		rightPointer = game.input.pointer1;
 	}
-	if (cursors.right.isDown || actions.right.isDown)
+	else if (game.input.pointer1.x != -1)
 	{
-		this.body.velocity.x += speed;
+		leftPointer = game.input.pointer1;
 	}
-	if (cursors.up.isDown || actions.up.isDown)
+	// This line accounts for two pointers that are in the same half
+	// If the pointer2 is on the right and it's not to the left of the first pointer OR it's to the right of the left pointer
+	if ((game.input.pointer2.x > 160 && (!rightPointer || rightPointer.x < game.input.pointer2)) || (leftPointer && leftPointer.x < game.input.pointer2))
 	{
-		this.body.velocity.y -= speed * perspective;
+		rightPointer = game.input.pointer2;
 	}
-	if (cursors.down.isDown || actions.down.isDown)
+	else if (game.input.pointer2.x != -1)
 	{
-		this.body.velocity.y += speed * perspective;
+		leftPointer = game.input.pointer2;
 	}
-	this.body.velocity.x *= friction;
-	this.body.velocity.y *= friction;
-
-	if (Math.random() < 1/60)
+	if (!leftPointer && !rightPointer)
 	{
-		// alert([this.body.velocity.x, this.body.velocity.y])
-	}
-	if (Math.abs(this.body.velocity.x) > 1 || Math.abs(this.body.velocity.y) > 1)
-	{
-		if (Math.abs(this.body.velocity.x) > Math.abs(this.body.velocity.y))
-		{
-			if (this.body.velocity.x > 0)
-			{
-				this.animations.play("walkRight");
-			}
-			else
-			{
-				this.animations.play("walkLeft");
-			}
-		}
-		else
-		{
-			if (this.body.velocity.y > 0)
-			{
-				this.animations.play("walkDown");
-			}
-			else
-			{
-				this.animations.play("walkUp");
-			}
-		}
-		this.onStop = "stand" + this.animations.currentAnim.name.substr(4);
-	}
-	else
-	{
-		this.animations.play(this.onStop);
-	}
-
-	// Bullets
-	var rate = 40;
-	var speed = 150;
-	var mouseDown = game.input.activePointer.isDown;
-	if (!this.lastDown && mouseDown)
-	{
-		if (this.bulletCountdown < 0)
-		{
-			this.bulletCountdown = rate;
-		}
-	}
-	this.lastDown = mouseDown;
-	// Brings to -1 after first shot
-	if (this.bulletCountdown >= 0)
-	{
-		this.bulletCountdown -= 1;
-	}
-	if (this.bulletCountdown == 0)
-	{
-		// this.bulletCountdown = rate;
-		var bullet = this.state.bullets.create(this.x + 3, this.y + 26, "bullet");
-		bullet.checkWorldBounds = true;
-		bullet.outOfBoundsKill = true;
-		game.physics.arcade.enable(bullet);
-		bullet.rotation = game.physics.arcade.moveToPointer(bullet, speed);
+		rightPointer = game.input.activePointer;
 	}
 
 	var distance = 27;
@@ -144,9 +90,11 @@ Player.prototype.update = function()
 	var decreaseSpeed = 2;
 	var goingDown = false;
 	var chargeKeep = 0.5;
-	if (actions.chargePortal.isDown)
+	if (true)//actions.chargePortal.isDown)
 	{
-		if (Phaser.Point.distance(this.body.center, this.portalUp.body.center) < distance)
+		if (Phaser.Point.distance(this.body.center, this.portalUp.body.center) < distance
+			  && (Phaser.Point.distance(this.portalUp.body.center, leftPointer) < distance
+				  || Phaser.Point.distance(this.portalUp.body.center, rightPointer) < distance))
 		{
 			this.portalUpHold++;
 			if (this.portalUpHold > holdFrames)
@@ -156,7 +104,9 @@ Player.prototype.update = function()
 				setLevel(level + 1);
 			}
 		}
-		else if (this.portalDown && Phaser.Point.distance(this.body.center, this.portalDown.body.center) < distance)
+		else if (this.portalDown && Phaser.Point.distance(this.body.center, this.portalDown.body.center) < distance
+			  && (Phaser.Point.distance(this.portalDown.body.center, leftPointer) < distance
+					 || Phaser.Point.distance(this.portalDown.body.center, rightPointer) < distance))
 		{
 			this.portalDownHold++;
 			if (this.portalDownHold > holdFrames)
@@ -200,6 +150,102 @@ Player.prototype.update = function()
 		this.portalDown.tint = Phaser.Color.getColor(255, 255 * (1 - this.portalDownHold / holdFrames), 255 * (1 - this.portalDownHold / holdFrames));
 	}
 
+	//leftPointer = game.input.activePointer;
+	if (leftPointer)
+	{
+		var dpadX = 25;
+		var dpadY = 110;
+		var dpadHS = 23;
+		touchDirX = leftPointer.x - (dpadX + dpadHS) > 0 ? 1 : -1;
+		touchDirY = leftPointer.y - (dpadY + dpadHS) > 0 ? 1 : -1;
+	}
+
+	var speed = 18;
+	var friction = .85;
+	if (cursors.left.isDown || actions.left.isDown || touchDirX == -1)
+	{
+		this.body.velocity.x -= speed;
+	}
+	if (cursors.right.isDown || actions.right.isDown || touchDirX == 1)
+	{
+		this.body.velocity.x += speed;
+	}
+	if (cursors.up.isDown || actions.up.isDown || touchDirY == -1)
+	{
+		this.body.velocity.y -= speed * perspective;
+	}
+	if (cursors.down.isDown || actions.down.isDown || touchDirY == 1)
+	{
+		this.body.velocity.y += speed * perspective;
+	}
+	this.body.velocity.x *= friction;
+	this.body.velocity.y *= friction;
+	if (Math.abs(this.body.velocity.x) > 1 || Math.abs(this.body.velocity.y) > 1)
+	{
+		if (Math.abs(this.body.velocity.x) > Math.abs(this.body.velocity.y))
+		{
+			if (this.body.velocity.x > 0)
+			{
+				this.animations.play("walkRight");
+			}
+			else
+			{
+				this.animations.play("walkLeft");
+			}
+		}
+		else
+		{
+			if (this.body.velocity.y > 0)
+			{
+				this.animations.play("walkDown");
+			}
+			else
+			{
+				this.animations.play("walkUp");
+			}
+		}
+		this.onStop = "stand" + this.animations.currentAnim.name.substr(4);
+	}
+	else
+	{
+		this.animations.play(this.onStop);
+	}
+
+	// Bullets
+	var cool = 20;
+	var charge = 0;
+	var speed = 150;
+	var mouseDown = rightPointer != -1 && rightPointer.isDown;
+	if (mouseDown)
+	{
+		if (this.bulletCharge < 0 && this.bulletCool <= 0)
+		{
+			this.bulletCharge = charge;
+		}
+	}
+	this.lastDown = mouseDown;
+	// Brings to -1 after first shot
+	if (this.bulletCharge > 0)
+	{
+		this.bulletCharge -= 1;
+	}
+	if (this.bulletCharge == 0)
+	{
+		// this.bulletCharge = rate;
+		var bullet = this.state.bullets.create(this.x + 3, this.y + 26, "bullet");
+		bullet.checkWorldBounds = true;
+		bullet.outOfBoundsKill = true;
+		game.physics.arcade.enable(bullet);
+		bullet.rotation = game.physics.arcade.moveToXY(bullet, bullet.x + rightPointer.x - 273, bullet.y + rightPointer.y - 133, speed);
+		this.bulletCool = cool;
+		this.bulletCharge = -1;
+	}
+	if (this.bulletCool > 0)
+	{
+		this.bulletCool -= 1;
+	}
+
+
 	game.physics.arcade.collide(this, this.state.walls);
 	game.physics.arcade.collide(this, this.portalUp);
 	if (typeof this.state.portalDown != "undefned")
@@ -231,8 +277,10 @@ Player.prototype.update = function()
 	}
 
 	this.healthBar.setPercent(100 * health / this.maxHealth);
-	this.bulletBar.setPercent(100 * (1 - (this.bulletCountdown / rate)));
+	var percent = 100 * (1 - (this.bulletCool / cool));
+	this.bulletBar.setPercent(percent);
 
 	this.state.sorted.sort("y", Phaser.Group.SORT_ASCENDING);
 
 }
+

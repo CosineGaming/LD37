@@ -77,6 +77,17 @@ function Monster(game, x, y, key, frame)
 Monster.prototype = Object.create(Phaser.Sprite.prototype);
 Monster.prototype.constructor = Player;
 
+Monster.prototype.moveToCurrentLevel = function()
+{
+	this.state.monsters.removeChild(this);
+	this.healthBar.kill()
+	this.state = game.state.getCurrentState();
+	this.state.monsters.add(this);
+	this.healthBar.drawBackground();
+	this.healthBar.drawHealthBar();
+
+}
+
 Monster.prototype.update = function()
 {
 

@@ -32,6 +32,11 @@ function setLevel(to)
 	game.state.start(level);
 }
 
-function resize()
+function resize(scale, parentBounds)
 {
+	if (parentBounds.width != 0)
+	{
+		var scale = Math.floor(Math.min((window.innerWidth + 3) / 320, (window.innerHeight + 3) / 180))
+		game.scale.setUserScale(scale, scale);
+	}
 }

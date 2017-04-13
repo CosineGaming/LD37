@@ -8,7 +8,7 @@ Boot.prototype.create = function()
 
 	game.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
 
-	game.scale.setUserScale(4, 4);
+	game.scale.setResizeCallback(resize);
 
 	cursors = game.input.keyboard.createCursorKeys();
 	actions = {
