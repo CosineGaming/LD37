@@ -60,36 +60,50 @@ function Monster(game, x, y, key, frame)
 	this.bulletStrength = config.bulletStrength;
 	this.inaccuracy = config.inaccuracy;
 
+	// TODO: Do this more responsibly
+	this.state = game.state.states[levels.length-1];
+
 	this.x = Math.random() * (320 - 64 - 3 - 3) + 3;
 	this.y = Math.random() * (180 - 64 - 52) + 52;
+	
+	// 0 moved away from portal
+	// 1 still near spawn at portalUp
+	// 2 still near spawn at portalDown
+	this.portalPast = 0;
 
 	this.aggressive = true;
 	this.confidence = Math.random() * (1-config.consistency/100) + config.consistency/100;
-
-	this.state = game.state.getCurrentState();
-
-	var healthBarConfig = {x: this.x, y: this.y - 6, width: this.width / 2, height: 1,
-	color: "#666666", bg: {color: "#444444"}, bar: {color: "#666666"}};
-	this.healthBar = new HealthBar(game, healthBarConfig);
 
 }
 
 Monster.prototype = Object.create(Phaser.Sprite.prototype);
 Monster.prototype.constructor = Player;
 
-Monster.prototype.moveToCurrentLevel = function()
+Monster.prototype.moveToLevel = function(to)
 {
 	this.state.monsters.removeChild(this);
-	this.healthBar.kill()
-	this.state = game.state.getCurrentState();
+	if (this.healthBar)
+	{
+		this.healthBar.kill();
+		// So it will be regenerated next time
+		delete this.healthBar;
+	}
+	this.portalPast = (to.storedLevel < this.state.storedLevel ? 1 : 2);
+	this.state = to;
 	this.state.monsters.add(this);
-	this.healthBar.drawBackground();
-	this.healthBar.drawHealthBar();
-
 }
 
 Monster.prototype.update = function()
 {
+
+	// HealthBar works on the current stage, so we have to wait until
+	// update indicates that this is an active state
+	if (typeof this.healthBar == "undefined")
+	{
+		var healthBarConfig = {x: this.x, y: this.y - 6, width: this.width / 2, height: 1,
+		color: "#666666", bg: {color: "#444444"}, bar: {color: "#666666"}};
+		this.healthBar = new HealthBar(game, healthBarConfig);
+	}
 
 	if (typeof this.body != "undefined" && this.body.offset.y == 0 && this.baseHeight != 0)
 	{
