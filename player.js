@@ -150,8 +150,7 @@ Player.prototype.update = function()
 		this.portalDown.tint = Phaser.Color.getColor(255, 255 * (1 - this.portalDownHold / holdFrames), 255 * (1 - this.portalDownHold / holdFrames));
 	}
 
-	//leftPointer = game.input.activePointer;
-	if (leftPointer)
+	if (leftPointer && leftPointer.isDown)
 	{
 		var dpadX = 25;
 		var dpadY = 110;
@@ -232,11 +231,20 @@ Player.prototype.update = function()
 	if (this.bulletCharge == 0)
 	{
 		// this.bulletCharge = rate;
-		var bullet = this.state.bullets.create(this.x + 3, this.y + 26, "bullet");
+		var bullet = this.state.bullets.create(this.x + 10, this.y + 26, "bullet");
 		bullet.checkWorldBounds = true;
 		bullet.outOfBoundsKill = true;
 		game.physics.arcade.enable(bullet);
-		bullet.rotation = game.physics.arcade.moveToXY(bullet, bullet.x + rightPointer.x - 273, bullet.y + rightPointer.y - 133, speed);
+		if (game.device.touch)
+		{
+			// dpad based shooting
+			bullet.rotation = game.physics.arcade.moveToXY(bullet, bullet.x + rightPointer.x - 273, bullet.y + rightPointer.y - 133, speed);
+		}
+		else
+		{
+			// Shoot directly to mouse
+			bullet.rotation = game.physics.arcade.moveToXY(bullet, rightPointer.x, rightPointer.y, speed);
+		}
 		this.bulletCool = cool;
 		this.bulletCharge = -1;
 	}

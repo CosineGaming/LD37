@@ -109,8 +109,11 @@ Level.prototype.create = function()
 			this.sorted.add(this.portalDown);
 		}
 
-        game.stage.addChild(game.make.sprite(25,  110, "dpad"));
-        game.stage.addChild(game.make.sprite(250, 110, "dpad"));
+		if (game.device.touch)
+		{
+			storedStage.addChild(game.make.sprite(25,  110, "dpad"));
+			storedStage.addChild(game.make.sprite(250, 110, "dpad"));
+		}
 
 	}
 
