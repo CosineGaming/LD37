@@ -36,7 +36,14 @@ function resize(scale, parentBounds)
 {
 	if (parentBounds.width != 0)
 	{
-		var scale = Math.floor(Math.min((window.innerWidth + 3) / 320, (window.innerHeight + 3) / 180))
+		// Biggest thing that fits into the screen
+		// Add 2 to avoid fencepost / misreporting / scrollbar errors
+		var scale = Math.min((window.innerWidth + 2) / 320, (window.innerHeight + 2) / 180);
+		if (scale > 3 && !game.device.touch)
+		{
+			// If we have room, make it even pixel size
+			scale = Math.floor(scale);
+		}
 		game.scale.setUserScale(scale, scale);
 	}
 }
