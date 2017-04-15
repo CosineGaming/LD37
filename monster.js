@@ -153,6 +153,32 @@ Monster.prototype.update = function()
 
 	}
 
+	var distance = 27;
+	var closePortalUp = Phaser.Point.distance(this.body.center, this.state.portalUp.body.center) < distance;
+	var closePortalDown = false;
+	// On the first level, there is no portal down
+	if (this.state.portalDown)
+	{
+		closePortalDown = Phaser.Point.distance(this.body.center, this.state.portalDown.body.center) < distance;
+	}
+	// We are close to a portal that is not portalPast
+	if ((closePortalUp && this.portalPast != 1) || (closePortalDown && this.portalPast != 2))
+	{
+		// We have wandered to a portal. Teleport?
+		var graphicalShiftChance = 1; // Percent
+		if (Math.random() < graphicalShiftChance / 100)
+		{
+			// Some shenanigans to be able to use the state's levelShift function
+			// TODO: Probably make this better code
+			var direction = closePortalDown ? -1 : 1;
+			var levelTo = this.state.storedLevel + direction;
+			setLevel(levelTo, false); // Ensure level exists
+			var stateTo = game.state.states[levelTo];
+			stateTo.levelShift(levelTo, direction, this);
+			return;
+		}
+	}
+
 	game.physics.arcade.collide(this, this.state.bullets, function(monster, bullet)
 	{
 		monster.health -= monster.player.bulletStrength;
