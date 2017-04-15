@@ -87,7 +87,7 @@ Player.prototype.update = function()
 	}
 
 	var distance = 27;
-	var holdFrames = 100;
+	var holdFrames = 50;
 	var withinDecreaseSpeed = 1;
 	var decreaseSpeed = 2;
 	var goingDown = false;
@@ -107,8 +107,8 @@ Player.prototype.update = function()
 			}
 		}
 		else if (this.portalDown && Phaser.Point.distance(this.body.center, this.portalDown.body.center) < distance
-			  && (Phaser.Point.distance(this.portalDown.body.center, leftPointer) < distance
-					 || Phaser.Point.distance(this.portalDown.body.center, rightPointer) < distance))
+				&& (Phaser.Point.distance(this.portalDown.body.center, leftPointer) < distance
+					|| Phaser.Point.distance(this.portalDown.body.center, rightPointer) < distance))
 		{
 			this.portalDownHold++;
 			if (this.portalDownHold > holdFrames)
@@ -284,6 +284,12 @@ Player.prototype.update = function()
 	{
 		health = 0;
 		game.state.start("lose");
+	}
+
+	health += 0.05;
+	if (health > this.maxHealth)
+	{
+		health = this.maxHealth;
 	}
 
 	this.healthBar.setPercent(100 * health / this.maxHealth);
