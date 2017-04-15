@@ -41,13 +41,6 @@ function Player(portalUp, portalDown)
 	this.body.width = 22;
 	this.body.height = 4;
 
-	this.state = game.state.getCurrentState();
-
-	var healthBarConfig = {x: 38, y: 8,  width: 64, height: 4, bar: {color: "#00d2ff"}, bg: {color: "#00a2ff"}};
-	var bulletBarConfig = {x: 22, y: 15, width: 32, height: 2, bar: {color: "#666666"}, bg: {color: "#444444"}};
-	this.healthBar = new HealthBar(game, healthBarConfig);
-	this.bulletBar = new HealthBar(game, bulletBarConfig);
-
 }
 
 Player.prototype = Object.create(Phaser.Sprite.prototype);
@@ -55,6 +48,15 @@ Player.prototype.constructor = Player;
 
 Player.prototype.update = function()
 {
+
+	if (typeof this.state == "undefined")
+	{
+		this.state = game.state.getCurrentState();
+		var healthBarConfig = {x: 38, y: 8,  width: 64, height: 4, bar: {color: "#00d2ff"}, bg: {color: "#00a2ff"}};
+		var bulletBarConfig = {x: 22, y: 15, width: 32, height: 2, bar: {color: "#666666"}, bg: {color: "#444444"}};
+		this.healthBar = new HealthBar(game, healthBarConfig);
+		this.bulletBar = new HealthBar(game, bulletBarConfig);
+	}
 
 	var touchDirX = 0;
 	var touchDirY = 0;

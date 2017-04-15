@@ -1,4 +1,4 @@
-function Level()
+function Level(storedLevel)
 {
 
 	this.isNew = true;
@@ -6,7 +6,9 @@ function Level()
 	this.monsterTypes = 1;
 	this.lastEntropy = 0;
 	this.bullets;
-	this.level = level;
+	if (typeof storedLevel == "undefined")
+		storedLevel = 0;
+	this.storedLevel = storedLevel; // TODO: Is it needed?
 
 }
 
@@ -21,18 +23,18 @@ Level.prototype.makeCracks = function(cracks)
 	}
 }
 
-Level.prototype.create = function()
+Level.prototype.draw = function()
 {
-	game.stage = levels[level];
+	var storedStage = levels[this.storedLevel];
 
 	var cracks = 0.5;
 
 	if (this.isNew)
 	{
 
-		game.stage.addChild(game.make.sprite(0, 0, "floor"));
+		storedStage.addChild(game.make.sprite(0, 0, "floor"));
 
-		this.walls = game.stage.addChild(game.make.group());
+		this.walls = storedStage.addChild(game.make.group());
 		this.walls.enableBody = true;
 		var wall = this.walls.create(0, 0);
 		wall.body.width = 320;
@@ -51,38 +53,39 @@ Level.prototype.create = function()
 		wall.body.height = 3;
 		wall.body.immovable = true;
 
-		this.cracks = game.stage.addChild(game.make.group());
+		this.cracks = storedStage.addChild(game.make.group());
 
-		this.sorted = game.stage.addChild(game.make.group());
+		this.sorted = storedStage.addChild(game.make.group());
 
-		this.monsters = game.stage.addChild(game.make.group());
+		this.monsters = storedStage.addChild(game.make.group());
 		this.monsters.enableBody = true;
 		this.monsters.classType = Monster;
 
-		this.makeCracks(Math.random() * level * cracks - 1);
+		this.makeCracks(Math.random() * this.storedLevel * cracks - 1);
 
-		for (var i=0; i<Math.random() * level * cracks; i++)
+		for (var i=0; i<Math.random() * this.storedLevel * cracks; i++)
 		{
-			var type = "monster" + Math.floor(Math.random() * this.monsterTypes);
-			var monster = this.monsters.create(0, 0, type);
+			// TODO: Preeeety sure this is redundante
+			//var type = "monster" + Math.floor(Math.random() * this.monsterTypes);
+			var monster = this.monsters.create(0, 0);//, type);
 		}
 
 		var portalLocations = [[80, 60],  [160, 60],  [240, 60],
-		                       [80, 120], [160, 120], [240, 120]];
+			[80, 120], [160, 120], [240, 120]];
 		// Pick a portal and remove it from the list
 		var up = portalLocations.splice(Math.floor(Math.random() * 6), 1)[0];
-		this.portalUp = game.stage.addChild(game.make.sprite(up[0], up[1] - 24, "portalUp"));
+		this.portalUp = storedStage.addChild(game.make.sprite(up[0], up[1] - 24, "portalUp"));
 		game.physics.arcade.enable(this.portalUp);
 		this.portalUp.body.offset = new Phaser.Point(0, 17);
 		this.portalUp.body.width = 25;
 		this.portalUp.body.height = 15;
 		this.portalUp.body.immovable = true;
 		// Prevent from going to levels[0]
-		if (level != 1)
+		if (this.storedLevel != 1)
 		{
 			// Pick a portal from the reduced list
 			var down = portalLocations[Math.floor(Math.random() * 5)];
-			this.portalDown = game.stage.addChild(game.make.sprite(down[0], down[1] - 24, "portalDown"));
+			this.portalDown = storedStage.addChild(game.make.sprite(down[0], down[1] - 24, "portalDown"));
 			game.physics.arcade.enable(this.portalDown);
 			this.portalDown.body.offset = new Phaser.Point(0, 17);
 			this.portalDown.body.width = 25;
@@ -90,15 +93,15 @@ Level.prototype.create = function()
 			this.portalDown.body.immovable = true;
 		}
 
-		this.player = game.stage.addChild(new Player(this.portalUp, this.portalDown));
+		this.player = storedStage.addChild(new Player(this.portalUp, this.portalDown));
 
-		this.bullets = game.stage.addChild(game.make.group());
-		this.enemyBullets = game.stage.addChild(game.make.group());
+		this.bullets = storedStage.addChild(game.make.group());
+		this.enemyBullets = storedStage.addChild(game.make.group());
 
-		game.stage.addChild(game.make.sprite(0, 180 - 26, "frontWall"));
+		storedStage.addChild(game.make.sprite(0, 180 - 26, "frontWall"));
 
 		this.font = game.make.retroFont("arabic", 12, 16, Phaser.RetroFont.TEXT_SET1);
-		game.stage.addChild(game.make.image(5, 180 - 22, this.font));
+		storedStage.addChild(game.make.image(5, 180 - 22, this.font));
 
 		// Add objects that exist in isometric space to a group that gets sorted
 		this.sorted.add(this.monsters);
@@ -126,37 +129,85 @@ Level.prototype.create = function()
 
 }
 
-Level.prototype.levelShift = function(to, direction=0)
+Level.prototype.create = function()
+{
+	game.stage = levels[this.storedLevel];
+}
+
+// Default direction is 50/50 -1, 1
+// Default toShift is random monster
+Level.prototype.levelShift = function(to, direction, toShift)
 {
 
 	var fromIndex;
 	var at;
-	if (direction != -1 && levels.length > to + 1 && Math.random() < 0.5)
+	if (typeof direction == "undefined")
 	{
-		fromIndex = to + 1;
-		at = this.portalUp;
+		if (Math.random() < 0.5 && to != 1)
+		{
+			direction = -1;
+		}
+		else
+		{
+			direction = 1;
+		}
 	}
-	else if (direction != 1 && to != 1)
+	if (direction == -1)
 	{
+		if (to == 1)
+		{
+			// We were requested to take from below level 1.
+			// This is impossible, there are no monsters below the player.
+			// Instead, then, we will make the shift downwards from somewhere above the player.
+			this.levelShift(to, 1);
+			return;
+		}
 		fromIndex = to - 1;
 		at = this.portalDown;
 	}
-	if (typeof fromIndex != "undefined")
+	if (direction == 1)
 	{
-		var from = game.state.states[fromIndex].monsters;
-		var monster = from.getRandom();
+		if (levels.length <= to + 1)
+		{
+			// We are the top level, and a shift is supposed to come from above
+			// First we must make the level above us, then we can shift from it
+			setLevel(to + 1, false);
+		}
+		fromIndex = to + 1;
+		at = this.portalUp;
+	}
+	if (fromIndex != level)
+	{
+		var monster;
+		if (typeof toShift == "undefined")
+		{
+			var from = game.state.states[fromIndex].monsters;
+			monster = from.getRandom();
+		}
+		else
+		{
+			monster = toShift;
+		}
 		if (monster)
 		{
-			entropy += 1;
+			if (Math.random() < 0.2)
+			{
+				// Moving lower increases entropy, higher decreases
+				// This provides more incentive to go downwards
+				entropy -= direction;
+			}
 			this.makeCracks(1);
 			this.font.text = "Entropy:" + (entropy + level) + " Phase detected";
-			monster.moveToCurrentLevel();
+ 			// this.storedLevel, not `to`, which is used for recursion
+			// TODO: We can probably merge `to` and `direction` into `levelFrom`
+			monster.moveToLevel(this);
 			monster.x = at.body.center.x - monster.width / 2;
 			monster.y = at.body.bottom - monster.height + 5;
 		}
 		else
 		{
-			this.levelShift(fromIndex, fromIndex - to);
+			// Look in the next level in the same direction for a monster
+			this.levelShift(fromIndex, direction);
 		}
 	}
 
@@ -165,10 +216,17 @@ Level.prototype.levelShift = function(to, direction=0)
 Level.prototype.update = function()
 {
 
-	var monsterTeleports = 100;
-	if (Math.random() * ((entropy + level) / 60 / monsterTeleports + 1) > 1)
+	// For each level, except the last one (unless we ARE the last one)
+	// Rationale: If we update the top level all the time, we'll run out of memory
+	// as we keep searching through higher and higher levels.
+	// However, we do need at least one higher so that monsters can shift down.
+	for (var l=1; l<levels.length - 1 + (level == levels.length-1); l++)
 	{
-		this.levelShift(level);
+		var monsterTeleports = 50;
+		if (Math.random() * ((entropy + level) / 60 / monsterTeleports + 1) > 1)
+		{
+			game.state.states[l].levelShift(l);
+		}
 	}
 
 }

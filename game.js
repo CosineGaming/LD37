@@ -20,16 +20,26 @@ game.state.add("load", new Load());
 game.state.add("lose", new Lose());
 game.state.start("boot");
 
-// The level gamestate
-function setLevel(to)
+// Create and store a level, given index `to`
+// If view is true (default), also switch to it
+function setLevel(to, view)
 {
-	level = to;
-	if (level >= levels.length)
+	if (typeof view == "undefined")
+	{
+		view = true;
+	}
+	while (to >= levels.length)
 	{
 		levels.push(new Phaser.Stage(game));
-		game.state.add(level, new Level());
+		var state = new Level(to);
+		game.state.add(levels.length-1, state);
+		state.draw();
 	}
-	game.state.start(level);
+	if (view)
+	{
+		level = to;
+		game.state.start(level);
+	}
 }
 
 function resize(scale, parentBounds)
