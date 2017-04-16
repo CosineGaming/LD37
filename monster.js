@@ -12,7 +12,7 @@ function Monster(game, x, y, key, frame)
 		},
 		{
 			health: 75,
-			touchDamage: -100,
+			touchDamage: -60,
 			speed: 20,
 			baseHeight: 8,
 			consistency: 99.4,
@@ -23,7 +23,7 @@ function Monster(game, x, y, key, frame)
 			inaccuracy: 40
 		},
 		{
-			health: 300,
+			health: 200,
 			touchDamage: 100,
 			speed: 5,
 			baseHeight: 10,
@@ -35,7 +35,7 @@ function Monster(game, x, y, key, frame)
 			touchDamage: -200,
 			speed: 100,
 			baseHeight: 12,
-			consistency: 0,
+			consistency: 30,
 			shoots: true,
 			firingRate: 200,
 			bulletSpeed: 40,

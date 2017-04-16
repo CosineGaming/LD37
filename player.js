@@ -214,7 +214,7 @@ Player.prototype.update = function()
 
 	// Bullets
 	var cool = 20;
-	var charge = 0;
+	var charge = 5;
 	var speed = 150;
 	var mouseDown = rightPointer != -1 && rightPointer.isDown;
 	if (mouseDown && !preventShoot)

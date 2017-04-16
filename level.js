@@ -233,7 +233,7 @@ Level.prototype.update = function()
 	// However, we do need at least one higher so that monsters can shift down.
 	for (var l=1; l<levels.length - 1 + (level == levels.length-1); l++)
 	{
-		var monsterTeleports = 100;
+		var monsterTeleports = 200;
 		if (Math.random() < entropy / 60 / monsterTeleports)
 		{
 			game.state.states[l].levelShift(l);
