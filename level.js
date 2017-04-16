@@ -8,7 +8,7 @@ function Level(storedLevel)
 	this.bullets;
 	if (typeof storedLevel == "undefined")
 		storedLevel = 0;
-	this.storedLevel = storedLevel; // TODO: Is it needed?
+	this.storedLevel = storedLevel;
 
 }
 
@@ -65,9 +65,7 @@ Level.prototype.draw = function()
 
 		for (var i=0; i<Math.random() * this.storedLevel * cracks; i++)
 		{
-			// TODO: Preeeety sure this is redundante
-			//var type = "monster" + Math.floor(Math.random() * this.monsterTypes);
-			var monster = this.monsters.create(0, 0);//, type);
+			var monster = this.monsters.create(0, 0);
 		}
 
 		var portalLocations = [[80, 60],  [160, 60],  [240, 60],
