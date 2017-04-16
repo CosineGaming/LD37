@@ -126,7 +126,8 @@ Player.prototype.update = function()
 				{
 					// Make it so we don't go immediately back down, but it still looks nice
 					this.portalHold[counter] *= chargeKeep;
-					entropy += 1;
+					// The more entropy increase per level, the more reason to go down a level
+					entropy += 5 * direction;
 					setLevel(level + direction);
 				}
 			}
@@ -267,10 +268,12 @@ Player.prototype.update = function()
 		if (monster.touchDamage > 0)
 		{
 			health -= monster.touchDamage;
+			monster.aggressive = true;
 		}
 		else
 		{
 			monster.health += monster.touchDamage;
+			monster.aggressive = false;
 		}
 	});
 	game.physics.arcade.overlap(this, this.state.enemyBullets, function(player, bullet)

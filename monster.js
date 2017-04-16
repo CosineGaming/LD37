@@ -72,7 +72,8 @@ function Monster(game, x, y, key, frame)
 	this.portalPast = 0;
 
 	this.aggressive = true;
-	this.confidence = Math.random() * (1-config.consistency/100) + config.consistency/100;
+	this.toPortal = false;
+	this.confidence = 1 - (Math.random() * (1-config.consistency/100) + config.consistency/100);
 
 }
 
@@ -112,7 +113,7 @@ Monster.prototype.update = function()
 		this.body.height = this.height - this.baseHeight;
 	}
 
-	if (Math.random() > this.confidence)
+	if (Math.random() < this.confidence)
 	{
 		this.aggressive = !this.aggressive;
 	}
@@ -126,13 +127,48 @@ Monster.prototype.update = function()
 	}
 	else
 	{
-		// Move towards the the opposite of the direction towards the player away from this.
-		// AKA: Phaser hack.
-		game.physics.arcade.moveToXY(this, 2 * this.x - this.player.x, 2 * this.y - this.player.y, this.speed);
+		if (typeof this.target == "undefined")
+		{
+			//alert("hi");
+		}
+		if (Math.random() < this.confidence * 2)
+		{
+			// Only update sometimes
+			// Either run from the player or towards a portal
+			// Encourage towards a portal with a random chance
+			if (!this.toPortal || Math.random() < 0.5)
+			{
+				// Move towards the portal we didn't come in. (Always trying to phase shift)
+				if (this.portalPast == 0)
+					this.toPortal = Math.random() < 0.5 && this.state.portalDown ? this.state.portalDown : this.state.portalUp;
+				else if (this.portalPast == 1 && this.state.portalDown)
+					this.toPortal = this.state.portalDown;
+				else
+					this.toPortal = this.state.portalUp;
+				this.toPortal = this.toPortal.body.center;
+			}
+			else
+			{
+				this.toPortal = false;
+			}
+		}
+		if (this.toPortal)
+		{
+			game.physics.arcade.moveToXY(this, this.toPortal.x - this.body.center.x, this.toPortal.y - this.body.center.y, this.speed);
+		}
+		else
+		{
+			// Move towards the opposite of the direction towards the player away from this.
+			// AKA: Phaser hack.
+			game.physics.arcade.moveToXY(this, 2 * this.x - this.player.x, 2 * this.y - this.player.y, this.speed);
+		}
 	}
 	if (game.physics.arcade.collide(this, this.state.walls))
 	{
-		this.aggressive = true;
+		if (Math.random() < this.confidence * 10)
+		{
+			this.aggressive = true;
+		}
 	}
 	if (this.shoots)
 	{
@@ -183,10 +219,16 @@ Monster.prototype.update = function()
 	{
 		monster.health -= monster.player.bulletStrength;
 		bullet.destroy();
-		monster.aggressive = false;
+		if (Math.random() < 0.5) // TODO: Make this based on this.confidence?
+		{
+			monster.aggressive = false;
+		}
 	});
 	if (this.health <= 0)
 	{
+		// Entropy decreases on killing monsters
+		entropy -= 1;
+		this.state.entropyText();
 		this.healthBar.kill();
 		this.destroy();
 	}

@@ -9,7 +9,7 @@ var level = 1;
 var levels = ["levels begin at 1"]; // Levels start at 1, ironically for technical reasons
 
 // Across-state variables
-var entropy = 0;
+var entropy = 5;
 var health = 100;
 var cursors;
 var actions;

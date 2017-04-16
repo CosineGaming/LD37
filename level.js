@@ -27,7 +27,7 @@ Level.prototype.draw = function()
 {
 	var storedStage = levels[this.storedLevel];
 
-	var cracks = 0.5;
+	var cracks = 0.2;
 
 	if (this.isNew)
 	{
@@ -123,7 +123,7 @@ Level.prototype.draw = function()
 	this.makeCracks(Math.random() * cracks * (entropy - this.lastEntropy) - 1);
 	this.lastEntropy = entropy;
 
-	this.font.text = "Entropy:" + (entropy + level);
+	this.entropyText();
 
 	this.isNew = false;
 
@@ -179,9 +179,10 @@ Level.prototype.levelShift = function(to, direction, toShift)
 	if (fromIndex != level)
 	{
 		var monster;
+		var fromLevel = game.state.states[fromIndex];
 		if (typeof toShift == "undefined")
 		{
-			var from = game.state.states[fromIndex].monsters;
+			var from = fromLevel.monsters;
 			monster = from.getRandom();
 		}
 		else
@@ -190,27 +191,39 @@ Level.prototype.levelShift = function(to, direction, toShift)
 		}
 		if (monster)
 		{
-			if (Math.random() < 0.2)
+			// Phase shifts increase entropy, making a hectic (fun) exponential effect
+			// However, we only do it for phase shifts the player sees
+			if (this.storedLevel == level || fromIndex == level)
 			{
-				// Moving lower increases entropy, higher decreases
-				// This provides more incentive to go downwards
-				entropy -= direction;
+				entropy += 1;
 			}
-			this.makeCracks(1);
-			this.font.text = "Entropy:" + (entropy + level) + " Phase detected";
+			if (Math.random() < 0.3)
+			{
+				this.makeCracks(1);
+			}
+			this.entropyText(true);
  			// this.storedLevel, not `to`, which is used for recursion
 			// TODO: We can probably merge `to` and `direction` into `levelFrom`
 			monster.moveToLevel(this);
 			monster.x = at.body.center.x - monster.width / 2;
 			monster.y = at.body.bottom - monster.height + 5;
 		}
-		else
-		{
-			// Look in the next level in the same direction for a monster
-			this.levelShift(fromIndex, direction);
-		}
+		// We no longer recursively look for monsters because each level
+		// generates its own shifts. It's no longer necessary. This way we
+		// don't get chains leading to huge numbers of generated levels.
 	}
 
+}
+
+Level.prototype.entropyText = function(phase)
+{
+	// Update the entropy text at the bottom
+	var seenState = game.state.getCurrentState();
+	if (seenState && seenState.font)
+	{
+		game.state.getCurrentState().font.text = "Entropy:" + entropy;
+	}
+	this.font.text = "Entropy:" + entropy + (phase ? " Phase detected" : "");
 }
 
 Level.prototype.update = function()
@@ -222,8 +235,8 @@ Level.prototype.update = function()
 	// However, we do need at least one higher so that monsters can shift down.
 	for (var l=1; l<levels.length - 1 + (level == levels.length-1); l++)
 	{
-		var monsterTeleports = 50;
-		if (Math.random() * ((entropy + level) / 60 / monsterTeleports + 1) > 1)
+		var monsterTeleports = 100;
+		if (Math.random() < entropy / 60 / monsterTeleports)
 		{
 			game.state.states[l].levelShift(l);
 		}
