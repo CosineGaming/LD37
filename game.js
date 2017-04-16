@@ -1,3 +1,6 @@
+// Offer to mobile people to add this nice web app to home screen full screen
+var x = addToHomescreen();
+
 // Game size is 320x180, upscales as much as it can in even increments
 var game = new Phaser.Game(320, 180, Phaser.CANVAS, "", null, false, false);
 
