@@ -1,8 +1,9 @@
 function Player(portalUp, portalDown)
 {
 
-	this.portalUpHold = 0;
-	this.portalDownHold = 0;
+	// This is stored this way for technical, not elegence reasons
+	// In order to loop over up and down it makes it possible
+	this.portalHold = { u: 0, d: 0 };
 	this.bulletCharge = 0;
 	this.bulletCool = 0;
 	this.portalUp = portalUp;
@@ -86,73 +87,71 @@ Player.prototype.update = function()
 		rightPointer = game.input.activePointer;
 	}
 
+	// Portal interaction! Suprisingly complex
 	var distance = 27;
 	var holdFrames = 50;
-	var withinDecreaseSpeed = 1;
+	var withinDecreaseSpeed = 0.5;
 	var decreaseSpeed = 2;
-	var goingDown = false;
 	var chargeKeep = 0.5;
-	if (true)//actions.chargePortal.isDown)
+	var preventMove = false;
+	var preventShoot = false;
+	// -1 and 1, for portalDown and portalUp
+	for (var direction=-1; direction<=1; direction+=2)
 	{
-		if (Phaser.Point.distance(this.body.center, this.portalUp.body.center) < distance
-			  && (Phaser.Point.distance(this.portalUp.body.center, leftPointer) < distance
-				  || Phaser.Point.distance(this.portalUp.body.center, rightPointer) < distance))
+		// Level 1, no portal down, skip it
+		if (direction == -1 && !this.portalDown)
+			continue;
+
+		var portal = direction == -1 ? this.portalDown : this.portalUp;
+
+		// Complex logic to determine whether we're portaling
+		// Are we near? Are we trying to act? (Are we clicking with a pointer or holding E?)
+		var near = Phaser.Point.distance(this.body.center, portal.body.center) < distance;
+		var point1 = Phaser.Point.distance(portal.body.center,  leftPointer) < distance &&  leftPointer.isDown;
+		var point2 = Phaser.Point.distance(portal.body.center, rightPointer) < distance && rightPointer.isDown;
+		var acting = point1 || point2 || actions.chargePortal.isDown;
+		var counter = direction == -1 ? "d" : "u";
+		// If a pointer is clicking on either portal,...
+		// prevent{action} will be true and it will be cancelled
+		if (point1)
+			preventMove = true;
+		if (point2)
+			preventShoot = true;
+		if (near)
 		{
-			this.portalUpHold++;
-			if (this.portalUpHold > holdFrames)
+			if (acting)
 			{
-				this.portalUpHold *= chargeKeep;
-				entropy += 1;
-				setLevel(level + 1);
+				this.portalHold[counter]++;
+				if (this.portalHold[counter] > holdFrames)
+				{
+					// Make it so we don't go immediately back down, but it still looks nice
+					this.portalHold[counter] *= chargeKeep;
+					entropy += 1;
+					setLevel(level + direction);
+				}
 			}
-		}
-		else if (this.portalDown && Phaser.Point.distance(this.body.center, this.portalDown.body.center) < distance
-				&& (Phaser.Point.distance(this.portalDown.body.center, leftPointer) < distance
-					|| Phaser.Point.distance(this.portalDown.body.center, rightPointer) < distance))
-		{
-			this.portalDownHold++;
-			if (this.portalDownHold > holdFrames)
+			else
 			{
-				this.portalDownHold *= chargeKeep;
-				entropy += 1;
-				setLevel(level - 1);
+				// We're not trying to portal, but we're near so decreases slower.
+				this.portalHold[counter] -= withinDecreaseSpeed;
 			}
 		}
 		else
 		{
-			goingDown = withinDecreaseSpeed;
+			// Decrease redness a lot, we are not within portal distance at all!
+			this.portalHold[counter] -= decreaseSpeed;
 		}
-	}
-	else
-	{
-		goingDown = decreaseSpeed;
-	}
-	if (goingDown)
-	{
-		if (this.portalUpHold > 0)
+		if (this.portalHold[counter] < 0)
 		{
-			this.portalUpHold -= goingDown;
+			// Don't go into negatives and make it take forever to portal
+			this.portalHold[counter] = 0;
 		}
-		if (this.portalUpHold < 0)
-		{
-			this.portalUpHold = 0;
-		}
-		if (this.portalDownHold > 0)
-		{
-			this.portalDownHold -= goingDown;
-		}
-		if (this.portalDownHold < 0)
-		{
-			this.portalDownHold = 0;
-		}
-	}
-	this.portalUp.tint = Phaser.Color.getColor(255, 255 * (1 - this.portalUpHold / holdFrames), 255 * (1 - this.portalUpHold / holdFrames));
-	if (this.portalDown)
-	{
-		this.portalDown.tint = Phaser.Color.getColor(255, 255 * (1 - this.portalDownHold / holdFrames), 255 * (1 - this.portalDownHold / holdFrames));
+
+		portal.tint = Phaser.Color.getColor(255, 255 * (1 - this.portalHold[counter] / holdFrames), 255 * (1 - this.portalHold[counter] / holdFrames));
+
 	}
 
-	if (leftPointer && leftPointer.isDown)
+	if (leftPointer && leftPointer.isDown && !preventMove)
 	{
 		var dpadX = 25;
 		var dpadY = 110;
@@ -217,7 +216,7 @@ Player.prototype.update = function()
 	var charge = 0;
 	var speed = 150;
 	var mouseDown = rightPointer != -1 && rightPointer.isDown;
-	if (mouseDown)
+	if (mouseDown && !preventShoot)
 	{
 		if (this.bulletCharge < 0 && this.bulletCool <= 0)
 		{
