@@ -111,14 +111,14 @@ Player.prototype.update = function()
 		var point2 = Phaser.Point.distance(portal.body.center, rightPointer) < distance && rightPointer.isDown;
 		var acting = point1 || point2 || actions.chargePortal.isDown;
 		var counter = direction == -1 ? "d" : "u";
-		// If a pointer is clicking on either portal,...
-		// prevent{action} will be true and it will be cancelled
-		if (point1)
-			preventMove = true;
-		if (point2)
-			preventShoot = true;
 		if (near)
 		{
+			// If a pointer is clicking on a near portal,...
+			// prevent{action} will be true and it will be cancelled
+			if (point1 && near)
+				preventMove = true;
+			if (point2 && near)
+				preventShoot = true;
 			if (acting)
 			{
 				this.portalHold[counter]++;
