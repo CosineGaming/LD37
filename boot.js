@@ -20,9 +20,7 @@ Boot.prototype.create = function()
 	}
 
 	game.renderer.renderSession.roundPixels = true;
-	// TODO: Make work
-	// Phaser.Canvas.setImageRenderingCrisp(game.canvas);
-	// Phaser.Canvas.setSmoothingEnabled(game.context, false);
+	Phaser.Canvas.setImageRenderingCrisp(game.canvas);
 	game.physics.startSystem(Phaser.Physics.ARCADE);
 
 	game.state.start("load");
