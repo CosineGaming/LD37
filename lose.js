@@ -37,7 +37,7 @@ Lose.prototype.update = function()
 		level = 1;
 		levels = ["levels begin at 1"]; // Levels start at 1, ironically for technical reasons
 
-		entropy = 5;
+		entropy = 3;
 		health = 100;
 
 		game.state = new Phaser.StateManager(game);

@@ -19,7 +19,7 @@ function Monster(game, x, y, key, frame)
 			shoots: true,
 			firingRate: 10,
 			bulletSpeed: 250,
-			bulletStrength: 4,
+			bulletStrength: 8,
 			inaccuracy: 40
 		},
 		{
@@ -39,7 +39,7 @@ function Monster(game, x, y, key, frame)
 			shoots: true,
 			firingRate: 200,
 			bulletSpeed: 40,
-			bulletStrength: 50,
+			bulletStrength: 75,
 			inaccuracy: 10
 		},
 		{
@@ -51,7 +51,7 @@ function Monster(game, x, y, key, frame)
 			shoots: true,
 			firingRate: 7,
 			bulletSpeed: 300,
-			bulletStrength: 2,
+			bulletStrength: 4,
 			inaccuracy: 5
 		}
 	];
@@ -139,10 +139,6 @@ Monster.prototype.update = function()
 	}
 	else
 	{
-		if (typeof this.target == "undefined")
-		{
-			//alert("hi");
-		}
 		if (Math.random() < this.confidence * 2)
 		{
 			// Only update sometimes
@@ -196,7 +192,7 @@ Monster.prototype.update = function()
 			var x = this.player.body.x + this.player.body.width/2 + Math.random() * this.inaccuracy - this.inaccuracy / 2;
 			var y = this.player.body.y + this.player.body.height/2 + Math.random() * this.inaccuracy - this.inaccuracy / 2;
 			bullet.rotation = game.physics.arcade.moveToXY(bullet, x, y, this.bulletSpeed);
-			bullet.strength = this.bulletStrength;
+			bullet.strength = Math.random() * this.bulletStrength;
 		}
 
 	}
@@ -229,7 +225,7 @@ Monster.prototype.update = function()
 
 	game.physics.arcade.collide(this, this.state.bullets, function(monster, bullet)
 	{
-		monster.health -= monster.player.bulletStrength;
+		monster.health -= Math.random() * monster.player.bulletStrength;
 		bullet.destroy();
 		if (Math.random() < 0.5) // TODO: Make this based on this.confidence?
 		{

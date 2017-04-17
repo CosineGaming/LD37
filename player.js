@@ -127,7 +127,7 @@ Player.prototype.update = function()
 					// Make it so we don't go immediately back down, but it still looks nice
 					this.portalHold[counter] *= chargeKeep;
 					// The more entropy increase per level, the more reason to go down a level
-					entropy += 5 * direction;
+					entropy += 3 * direction;
 					setLevel(level + direction);
 				}
 			}
