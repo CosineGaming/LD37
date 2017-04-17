@@ -1,5 +1,7 @@
 phaser_tutorial_02/
 *.psd
+*.xcf
+*.swp
 
 # Windows image file caches
 Thumbs.db
