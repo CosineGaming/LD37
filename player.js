@@ -10,7 +10,7 @@ function Player(portalUp, portalDown)
 	this.portalDown = portalDown;
 	this.lastDown = false;
 
-	this.bulletStrength = 20;
+	this.bulletStrength = 40;
 
 	Phaser.Sprite.call(this, game, 0, 0, "player");
 

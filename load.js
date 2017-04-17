@@ -22,6 +22,7 @@ Load.prototype.preload = function()
 	game.load.image("monster1", "/static/entropy/assets/monster1.png");
 	game.load.image("monster2", "/static/entropy/assets/monster2.png");
 	game.load.image("monster3", "/static/entropy/assets/monster3.png");
+	game.load.image("monster4", "/static/entropy/assets/monster4.png");
     game.load.image("dpad", "/static/entropy/assets/dpad.png");
 
 	game.load.spritesheet("player", "/static/entropy/assets/player.png", 22, 35);
