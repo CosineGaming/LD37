@@ -1,8 +1,10 @@
-<!doctype html>
-<html>
-<head>
-<meta charset="UTF-8" />
-<title>Entropy - Cosine Gaming</title>
+<!-- TODO: Maybe merge with online-game.html??? -->
+{% extends "standard.html" %}
+
+{% block title %}Entropy - Cosine Gaming{% endblock %}
+
+{% block head %}
+{{ super() }}
 <!-- Mobile suppert -->
 <meta name="viewport" content="width=device-width, initial-scale=1,
 minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui" />
@@ -34,11 +36,24 @@ minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui" />
 	{
 		margin: 0;
 		padding: 0;
-		overflow: hidden;
+	}
+	.cover
+	{
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		background-color: black;
 	}
 </style>
+{% endblock %}
 
-</head>
-<body>
-</body>
-</html>
+{% block main %}
+<div id="cover"></div>
+<div class="wrap" style="max-width: 1060px;" id="container">
+	<div class="card" id="game">
+		<h2 class="bottom-spaced">Entropy</h2>
+	</div>
+</div>
+{% endblock %}

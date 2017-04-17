@@ -5,7 +5,7 @@
 //var brim = require("brim");
 
 // Game size is 320x180, upscales as much as it can in even increments
-var game = new Phaser.Game(320, 180, Phaser.CANVAS, "", null, false, false);
+var game = new Phaser.Game(320, 180, Phaser.CANVAS, "game", null, false, false);
 
 // Constants n shit
 var perspective = 4/5;
