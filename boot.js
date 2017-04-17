@@ -6,6 +6,9 @@ function Boot()
 Boot.prototype.create = function()
 {
 
+	//var Scream = scream.Scream();
+	//var Brim = brim.Brim({ viewport: Scream });
+
 	game.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
 
 	game.scale.setResizeCallback(resize);

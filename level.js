@@ -128,6 +128,10 @@ Level.prototype.create = function()
 	this.makeCracks(Math.random() * cracks * (entropy - this.lastEntropy) - 1);
 	this.lastEntropy = entropy;
 	this.entropyText();
+	if (game.device.touch)
+	{
+		game.input.onDown.add(function() { game.scale.startFullScreen(); });
+	}
 }
 
 // Default direction is 50/50 -1, 1
